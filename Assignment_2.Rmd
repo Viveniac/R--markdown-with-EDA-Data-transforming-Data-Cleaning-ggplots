@@ -1,0 +1,200 @@
+---
+title: "Assignment_2"
+author: "Vivekanand Kulkarni 19200231"
+date: "08/11/2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+## 1 & 2)
+Load in the data as an object called DublinAirport. Notice that you have to skip the
+first 19 lines contained in the file before beginning to read data.
+
+```{r}
+DublinAirport=read.csv("V:\\Study\\R-Programming\\Assignments\\Assignment_2\\mly532.csv", header = TRUE,sep = ",",skip = 19)
+str(DublinAirport)
+```
+
+## 3) Transform the Column month
+Used factor to assign the month columns with month names. And also made use of the built-in constant month.name which is a vector of 12 months.
+```{r}
+DublinAirport$month<-factor(DublinAirport$month, levels = c('1', "2","3","4","5","6","7","8","9","10","11","12"),labels = month.name)
+head(DublinAirport)
+```
+
+## 4)
+Use the aggregate function to compute which month has on average the highest and
+the lowest Precipitation Amount.
+```{r}
+Mean_rain=aggregate(DublinAirport$rain,list(DublinAirport$month),mean)
+names(Mean_rain)[1]<-"Months"
+names(Mean_rain)[2]<-"Mean of each month"
+Mean_rain_sorted<- order(Mean_rain[,2],decreasing = TRUE)
+print(paste0("The month with Highest rain Precipitation Amount is:",month.name[Mean_rain_sorted[1]]))
+print(paste0("The month with Lowest rain Precipitation Amount is:",month.name[Mean_rain_sorted[12]]))
+```
+## 5)
+Creating a new column which contains a factor indicating the season:
+Winter: December, January, February,
+Spring: March, April, May,
+Summer: June, July, August,
+Autumn: September, October, November
+```{r}
+DublinAirport$Season<-factor(DublinAirport$month ,levels =c("January", "February","March","April","May","June","July","August","September","October","November","December"),labels=c("Winter","Winter", "Spring","Spring","Spring", "Summer","Summer","Summer","Autumn","Autumn","Autumn","Winter"))
+
+head(DublinAirport)
+```
+## 6)
+Assign to the DublinAiport object the classes WeatherData and data.frame.
+```{r}
+class(DublinAirport)<-c('WeatherData','data.frame')
+class(DublinAirport)
+```
+## 7)
+Write an S3 summary method for an object of class WeatherData which produces
+the following statistical summaries the rain, maxtp, mintp, maxgt variables split by
+season: mean, standard deviation, minimum, maximum. Ignore the missing values in
+the calculations.
+Test your function on the DublinAirport data set and comment your fndings.
+```{r}
+summary.WeatherData<-function(x)
+{
+mean_rain <- aggregate(rain~Season, data = x, mean,na.rm= TRUE)
+names(mean_rain)[1]<-"Mean per season"
+max_rain <- aggregate(rain~Season, data = x,max,na.rm= TRUE)
+names(max_rain)[1]<-"Max  per season"
+sd_rain<- aggregate(rain~Season, data=x,sd,na.rm= TRUE)
+names(sd_rain)[1]<-"Standard Deviation  per season"
+min_rain<- aggregate(rain~Season, data=x,min,na.rm=TRUE)
+names(min_rain)[1]<-"Min  per season"
+
+print(mean_rain)
+print(max_rain)
+print(sd_rain)
+print(min_rain)
+
+mean_maxtp <- aggregate(maxtp~Season, data = x, mean,na.rm= TRUE)
+names(mean_maxtp)[1]<-"Mean  per season"
+max_maxtp <- aggregate(maxtp~Season, data = x,max,na.rm= TRUE)
+names(max_maxtp)[1]<-"Max  per season"
+sd_maxtp <- aggregate(maxtp~Season, data=x,sd,na.rm= TRUE)
+names(sd_maxtp)[1]<-"Standard Deviation  per season"
+min_maxtp <- aggregate(maxtp~Season, data=x,min,na.rm=TRUE)
+names(min_maxtp)[1]<-"Min  per season"
+
+
+print(mean_maxtp)
+print(max_maxtp)
+print(sd_maxtp)
+print(min_maxtp)
+
+mean_mintp <- aggregate(mintp~Season, data = x, mean,na.rm= TRUE)
+names(mean_mintp)[1]<-"Mean  per season"
+max_mintp <- aggregate(mintp~Season, data = x,max,na.rm= TRUE)
+names(max_mintp)[1]<-"Max  per season"
+sd_mintp <- aggregate(mintp~Season, data=x,sd,na.rm= TRUE)
+names(sd_mintp)[1]<-"Standard Deviation per season"
+min_mintp <- aggregate(mintp~Season, data=x,min,na.rm=TRUE)
+names(min_mintp)[1]<-"Min  per season"
+
+
+print(mean_mintp)
+print(max_mintp)
+print(sd_mintp)
+print(min_mintp)
+
+mean_maxgt <- aggregate(maxgt~Season, data = x, mean,na.rm= TRUE)
+names(mean_maxgt)[1]<-"Mean  per season"
+max_maxgt <- aggregate(maxgt~Season, data = x,max,na.rm= TRUE)
+names(max_maxgt)[1]<-"Max  per season"
+sd_maxgt<- aggregate(maxgt~Season, data=x,sd,na.rm= TRUE)
+names(sd_maxgt)[1]<-"Standard Deviation per season"
+min_maxgt<- aggregate(maxgt~Season, data=x,min,na.rm=TRUE)
+names(min_maxgt)[1]<-"Min  per season"
+
+print(mean_maxgt)
+print(max_maxgt)
+print(sd_maxgt)
+print(min_maxgt)
+}
+summary(DublinAirport)
+```
+Created an S3 plot method for the class WeatherData that produces the following plots.
+(1) Plot of the monthly Air Temperature (C) (maxtp, mintp).
+(2) Plot of the Precipitation Amount (mm) (rain).
+(3) Plot of the Highest Gust (knot) (maxgt).
+The user must be able to decide which years to plot. By default it will use the
+data from 2015 until 2018.
+The user must be able to decide which plot to draw (i.e, only one of the three,
+two of the three, or all three plots). By default the function will create all three
+plots.
+The plots must be on a single panel.
+The plots must have meaningful labels and/or titles, and a legend if needed.
+Test your function on the DublinAirport data set.
+```{r}
+DublinAirport<- na.omit(DublinAirport)
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+plot.WeatherData <- function(Dframe, yearfrom = 2015, yearto = 2018, number_of_plots = 3){
+  
+  # Selecting the data based on the range of years inputted to the function
+  plot_data <- Dframe[Dframe$year >= yearfrom & Dframe$year <= yearto, ]
+
+  # Plot of the monthly Air Temperature (C) (maxtp, mintp).  
+  plot1 <- ggplot(plot_data, aes(x = year, y = maxtp, colour = month)) +
+  geom_line(position = "jitter") + 
+  ggtitle(" Plot of Air Temperature (C) (maxtp, mintp).") + 
+  xlab("Years") + 
+  ylab("Maximum and Minimum Temperatures") +
+  theme(axis.text.x = element_text(angle = 90, face = "bold", size = 8)) +
+  geom_line(aes(x = year, y = mintp, colour = month),position = "jitter") 
+  
+  # Plot of the Precipitation Amount (mm) (rain). 
+  plot2 <- ggplot(plot_data, aes(x = year, y = rain, colour = month)) + 
+  geom_line(position = "jitter") +
+  ggtitle(" Plot of Precipitation Amount (mm) (rain).") + 
+  xlab("Years") + 
+  ylab("Precipitation Amount (mm) in terms of Rain") + 
+  theme(axis.text.x = element_text(angle = 90, face = "bold", size = 8))
+
+  # Plot of the Highest Gust (knot) (maxgt). 
+  plot3 <- ggplot(plot_data, aes(x = year, y = maxgt, colour = month  )) + 
+  geom_line(position = "jitter") +
+  ggtitle("Highest Gust Plot(knot) (maxgt).") + 
+  xlab("Year") + 
+  ylab("Highest Gust (knot)") + 
+  theme(axis.text.x = element_text(angle = 90, face = "bold", size = 8))
+  
+  # Comparing the number_of_plots variable, and retrieving according to the request.
+  if(number_of_plots == 1)
+  {
+    #Display plot1 if number_of_plots is 1
+    plot1
+  }
+  else if(number_of_plots == 2)
+  {
+    #Display plot1 & plot2 if number_of_plots is 2
+    require(gridExtra)
+    grid.arrange(plot1, plot2,nrow =1, ncol = 2)
+  }
+  else if(number_of_plots == 3)
+  {
+    # By Default all the 3 plots are to be Displayed.
+    # Display plot1, plot2 & plot3 if the number_of_plots is 3
+    require(gridExtra)
+    grid.arrange(plot1, plot2, plot3, nrow =2, ncol = 2)
+  }
+}
+
+# The plot function is called and defined for the WeatherData Class
+# Arguments to plot() functions are 
+# Dframe --> The Data Frame, in this case DublinAirport
+# yearfrom --> The year to begin with
+# yearto --> Till which year the data should be selected.
+# number_of_plots --> Number of plots that are to be  displayed among the 3 available plots. By default all 3 plots are displayed.
+
+# For the demonstration purpose, Dframe = DublinAirport,  yearfrom = 2015, yearto = 2018, number_of_plots = 3
+plot(DublinAirport, 2015,2018,3)
+```
+
